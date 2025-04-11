@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>YouTube Transcript Summarizer</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&family=Pacifico&family=Open+Sans:wght@300;600&display=swap');
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #f0f0f0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+        .container {
+            background: #fff;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            width: 90%;
+            max-width: 600px;
+            display: none;
+        }
+        .input-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        .button {
+            background: #ff0000;
+            color: #fff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1.2em;
+            transition: box-shadow 0.5s ease, background 0.5s ease;
+        }
+        .button:hover {
+            background: #0ed332;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.7),
+                        0 0 30px rgba(255, 255, 0, 0.7),
+                        0 0 30px rgba(0, 255, 0, 0.7),
+                        0 0 30px rgba(0, 0, 255, 0.7);
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .loading-bar {
+            display: none;
+            width: 100%;
+            height: 10px;
+            background: linear-gradient(90deg, #ff0000, #ff9900, #00ff00, #0000ff);
+            background-size: 400% 400%;
+            animation: gradient 2s ease infinite;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
+        .title-animation {
+            font-family: 'Pacifico', cursive;
+            font-size: 2.5em;
+            color: #333;
+            overflow: hidden;
+            white-space: nowrap;
+            border-right: .15em solid orange;
+            animation: typing 3s steps(40, end), blink-caret .75s step-end infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 1s ease;
+        }
+
+        .title-animation.finished {
+            border-right: none;
+            animation: none;
+        }
+
+        .title-animation.zoom-out {
+            animation: zoomOut 1s ease-out forwards;
+            transform-origin: top center;
+        }
+
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+
+        @keyframes blink-caret {
+            from, to { border-color: transparent }
+            50% { border-color: orange; }
+        }
+
+        @keyframes zoomOut {
+            from { transform:translate(-50%,-50%) scale(1); }
+            to { transform:translate(-50%,-200%) scale(0.5); opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="title-animation" id="title-animation">YouTube Transcript Summarizer</div>
+    <div class="container">
+        <h1 class="animate__animated animate__fadeInDown" style="font-family: 'Open Sans', sans-serif;">YouTube Transcript Summarizer</h1>
+        <form id="summarize-form" class="animate__animated animate__fadeInUp">
+            <div class="input-group">
+                <label for="youtube-link">YouTube Link:</label>
+                <input type="text" name="video_url" id="youtube-link" placeholder="Enter YouTube link" required>
+            </div>
+            <div class="input-group">
+                <label for="summary-type">Summary Type:</label>
+                <select name="summary_type" id="summary-type">
+                    <option value="extractive">Extractive</option>
+                    <option value="abstractive">Abstractive</option>
+                    <option value="hybrid">Hybrid</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="language">Select Language:</label>
+                <select name="target_language" id="language">
+                    <option value="en">English</option>
+                    <option value="es">Spanish</option>
+                    <option value="fr">French</option>
+                    <option value="de">German</option>
+                    <option value="zh-cn">Chinese (Simplified)</option>
+                    <!-- Add more languages as needed -->
+                </select>
+            </div>
+            <button class="button" type="submit">Summarize</button>
+        </form>
+        <div class="loading-bar" id="loading-bar"></div>
+        <div id="summary-result" style="display: none;"></div>
+    </div>
+
+    <script>
+        window.onload = function() {
+            setTimeout(() => {
+                const titleAnimation = document.getElementById('title-animation');
+                titleAnimation.classList.add('finished');
+                setTimeout(() => {
+                    titleAnimation.classList.add('zoom-out');
+                    setTimeout(() => {
+                        titleAnimation.style.display = 'none';
+                        document.querySelector('.container').style.display = 'block';
+                    }, 1000);
+                }, 500);
+            }, 1250);
+        };
+
+        document.getElementById('summarize-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const formData = new FormData(this);
+            document.querySelector('.button').style.display = 'none';
+            document.getElementById('loading-bar').style.display = 'block';
+
+            fetch('/summarize', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('loading-bar').style.display = 'none';
+                if (data.error) {
+                    document.getElementById('summary-result').innerText = 'Error: ' + data.error;
+                } else {
+                    document.getElementById('summarize-form').style.display = 'none';
+                    document.getElementById('summary-result').style.display = 'block'; // Show the result div
+                    document.getElementById('summary-result').innerHTML = `
+                        <div id="summary-text">${data.summary}</div>
+                        <button class="button" onclick="copyToClipboard()">Copy</button>
+                        <a href="${data.audio_path}" download="summary.mp3">Download Audio</a>
+                    `;
+                }
+            })
+            .catch(error => {
+                document.getElementById('loading-bar').style.display = 'none';
+                console.error('Error:', error);
+                document.getElementById('summary-result').innerText = 'An error occurred. Please try again.';
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+Flask
+youtube-transcript-api
+langdetect
+googletrans==4.0.0-rc1
+tensorflow
+nltk
+pydub
+speechrecognition
+gtts
+moviepy
