@@ -21,7 +21,7 @@ The **YouTube Transcript Summarizer** is a web application that extracts and sum
 ## Installation
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/youtube-transcript-summarizer.git
+   git clone https://github.com/Luckyhunt/Youtube-Transcriot-Summarizer-YTS-.git
    ```
 2. Navigate to the project directory:
    ```bash
